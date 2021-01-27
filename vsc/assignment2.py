@@ -75,20 +75,20 @@ accuracy_score(Ytest, predictions)
 
 # ## Step 3
 
-# In[20]:
+# In[9]:
 
 
 from sklearn.pipeline import make_pipeline
 
 
-# In[25]:
+# In[10]:
 
 
 Xtrain_dict = Xtrain.to_dict('records')
 Xtest_dict = Xtest.to_dict('records')
 
 
-# In[30]:
+# In[11]:
 
 
 pipeline = make_pipeline(
@@ -97,7 +97,7 @@ pipeline = make_pipeline(
 )
 
 
-# In[32]:
+# In[12]:
 
 
 pipeline.fit(Xtrain_dict, Ytrain)
@@ -108,7 +108,7 @@ accuracy_score(Ytest, pipeline.predict(Xtest_dict))
 
 # ## DecisionTreeClassifier
 
-# In[45]:
+# In[13]:
 
 
 import numpy as np
@@ -119,7 +119,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 
 
-# In[113]:
+# In[14]:
 
 
 N = 21
@@ -134,13 +134,13 @@ for md in range(1, N):
     results = np.append(results, np.array([[md, accuracy, precision, recall]]), axis=0)
 
 
-# In[114]:
+# In[15]:
 
 
 print(results)
 
 
-# In[50]:
+# In[16]:
 
 
 plt.plot(results[:,0], results[:,1])
@@ -149,31 +149,32 @@ plt.show()
 
 # ## RandomForestClassifier
 
-# In[151]:
+# In[72]:
 
 
-N_TREES = [1, 50, 100, 150]
-MD = 5
-results_forest = np.zeros((MD, 4, len(N_TREES)))
+N_TREES = [1, 25, 50, 75, 100]
+MD = 20
 i = 0
-j = 0
+results_forest = np.zeros((len(N_TREES), 4, MD))
 for n_trees in N_TREES:
-    for md in range(1, MD + 1):
-        clf_tree = DecisionTreeClassifier(max_depth=md, random_state=0)
+    for j in range(1, MD + 1):
+        clf_tree = RandomForestClassifier(n_estimators=n_trees, max_depth=j, random_state=0)
         clf_tree.fit(X_train_encoded, Ytrain)
         predictions = clf_tree.predict(X_test_encoded)
         accuracy = accuracy_score(Ytest, predictions)
         precision = precision_score(Ytest, predictions, pos_label='<=50K')
         recall = recall_score(Ytest, predictions, pos_label='<=50K')
-        results_forest[i, :, j] = [md, accuracy, precision, recall]
-        j += 1
+        results_forest[i, :, j-1] = [j, accuracy, precision, recall]
     i += 1
-    j = 0
 
 
-# In[149]:
+# In[83]:
 
 
 plt.plot(results_forest[0, 0, :], results_forest[0, 1, :])
+
+for i in range(1, len(N_TREES)):
+    plt.plot(results_forest[i, 0, :], results_forest[i, 1, :])
+    
 plt.show()
 

@@ -119,11 +119,11 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 
 
-# In[14]:
+# In[31]:
 
 
 N = 21
-results = np.empty((0, 4), int)
+results = np.empty((0, 4))
 for md in range(1, N):
     clf_tree = DecisionTreeClassifier(max_depth=md, random_state=0)
     clf_tree.fit(X_train_encoded, Ytrain)
@@ -134,31 +134,36 @@ for md in range(1, N):
     results = np.append(results, np.array([[md, accuracy, precision, recall]]), axis=0)
 
 
-# In[15]:
+# In[32]:
 
 
 print(results)
 
 
-# In[16]:
+# In[39]:
 
 
 plt.plot(results[:,0], results[:,1])
+plt.xticks([1, 5, 10, 15, 20]) # default ticks not meaningful (decimal values)
+plt.xlabel('Depth')
+plt.ylabel('Accuracy')
 plt.show()
 
 
+# After a depth of 10 we see that the classifier starts to overfit to the training data and therefore has reduced performance on the testing data.
+
 # ## RandomForestClassifier
 
-# In[72]:
+# In[25]:
 
 
-N_TREES = [1, 25, 50, 75, 100]
-MD = 20
+N_TREES = [1, 50]
+MD = 40
 i = 0
 results_forest = np.zeros((len(N_TREES), 4, MD))
 for n_trees in N_TREES:
     for j in range(1, MD + 1):
-        clf_tree = RandomForestClassifier(n_estimators=n_trees, max_depth=j, random_state=0)
+        clf_tree = RandomForestClassifier(n_estimators=n_trees, max_depth=j, random_state=0, n_jobs=-1)
         clf_tree.fit(X_train_encoded, Ytrain)
         predictions = clf_tree.predict(X_test_encoded)
         accuracy = accuracy_score(Ytest, predictions)
@@ -167,14 +172,40 @@ for n_trees in N_TREES:
         results_forest[i, :, j-1] = [j, accuracy, precision, recall]
     i += 1
 
+# Returns a 3D numpy array of size (#forests, 4, depth), where the 2nd element is a vector containing evaluation
+# metrics and the depth at which they were calculated: (depth, accuracy, precision, recall)
 
-# In[83]:
+
+# In[48]:
 
 
-plt.plot(results_forest[0, 0, :], results_forest[0, 1, :])
+plt.plot(results_forest[0, 0, :], results_forest[0, 1, :], label=str(N_TREES[0]))
 
 for i in range(1, len(N_TREES)):
-    plt.plot(results_forest[i, 0, :], results_forest[i, 1, :])
-    
+    plt.plot(results_forest[i, 0, :], results_forest[i, 1, :], label=str(N_TREES[i]))
+
+plt.legend(title='Forest size', bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.xlabel('Depth')
+plt.ylabel('Accuracy')
 plt.show()
 
+
+# Seems to require greater tree depth for a random forest to overfit. Irregular accuracy for forest of size 1.
+
+# # Task 3
+
+# In[121]:
+
+
+importances = clf_tree.feature_importances_
+names = np.array(dv.feature_names_)
+order = clf_tree.feature_importances_.argsort()[::-1]
+names[order][:11]
+
+
+# marital-status: married, civilian
+# education-num: the highest level of education
+# capital-gain: capital gains for an individual
+# fnlwgt: the number of people the census believes the entry represents
+
+# Seems strange that being married is the most important feature, but it is possible that this being the US it is not uncommon to be a housewife and thus not having an income.
